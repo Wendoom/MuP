@@ -5,8 +5,9 @@
     msg2 db 0Ah, 0Dh, "Matching string is found$"
     msg3 db 0Ah, 0Dh, "Matching string is not found$"
     dat1 db 'hello12345world67890$', 0   
-
-    string1 db 5, 4, 5 dup(?)            ; Input buffer for 4 characters, max 5 bytes (first byte = max length, second byte = actual length)
+	max1 db 5
+	act1 db 4
+    string1 db 5 dup(?)            ; Input buffer for 4 characters, max 5 bytes (first byte = max length, second byte = actual length)
     
 .code
 .startup
@@ -25,13 +26,13 @@
     int 21h
 
     ; Prompt user to enter 4 characters
-    lea dx, string1
+    lea dx, max1
     mov ah, 0Ah
     int 21h
 
     ; Set up pointers and counters
     lea si, dat1          ; SI points to dat1 (the string to compare)
-    lea di, string1 + 2    ; DI points to the first character of the user input (skip length bytes)
+    lea di, string1    ; DI points to the first character of the user input (skip length bytes)
     mov cl, 17            ; CL = max length of dat1 (17 characters to check)
 
     ; Loop through dat1 to find matching 4 characters
