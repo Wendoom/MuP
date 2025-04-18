@@ -4,20 +4,20 @@
     msg1 db "Enter the string to be compared$"
     msg2 db 0Ah, 0Dh, "Matching string is found$"
     msg3 db 0Ah, 0Dh, "Matching string is not found$"
-    dat1 db 'hello12345world67890$', 0   
-	max1 db 5
-	act1 db 4
-    string1 db 5 dup(?)            ; Input buffer for 4 characters, max 5 bytes (first byte = max length, second byte = actual length)
+
+    dat1 db 'hxxxohlll5world67890$', 0   
+    max1 db 4
+    string1 db 5, ?, 5 dup(?)   ; First byte=max input, second byte=actual input, rest for characters
     
 .code
 .startup
 
-    ; Display the prompt "Enter the string to be compared"
+    ; Display the message
     lea dx, msg1
     mov ah, 09h
     int 21h
 
-    ; Move to next line (line feed and carriage return)
+    ; Newline for input
     mov dl, 0Ah
     mov ah, 02h
     int 21h
@@ -25,55 +25,58 @@
     mov ah, 02h
     int 21h
 
-    ; Prompt user to enter 4 characters
-    lea dx, max1
+    ; Accept 4-character input
+    lea dx, string1
     mov ah, 0Ah
     int 21h
 
-    ; Set up pointers and counters
-    lea si, dat1          ; SI points to dat1 (the string to compare)
-    lea di, string1    ; DI points to the first character of the user input (skip length bytes)
-    mov cl, 17            ; CL = max length of dat1 (17 characters to check)
+    ; Set up pointers
+    lea si, dat1             ; dat1 base
+    lea bx, string1 + 2      ; input string base
+    mov cl, 17 - 4 + 1       ; Loop only valid positions (14 attempts)
 
-    ; Loop through dat1 to find matching 4 characters
-x1: 
-    mov al, [si]          ; Load a byte from dat1 into AL
-    cmp al, [di]          ; Compare with the first character of the input
-    jne x2                ; If they don't match, jump to x2 (continue looping)
+check_loop:
+    push si                  ; Save SI for reset if failed
+    lea di, string1 + 2      ; Always start comparison from input start
 
-    inc si
-    inc di
-    mov al, [si]
-    cmp al, [di]          ; Compare second character
-    jne x2                ; If they don't match, jump to x2
+    mov al, [si]             ; First char
+    cmp al, [di]
+    jne no_match
 
     inc si
     inc di
-    mov al, [si]
-    cmp al, [di]          ; Compare third character
-    jne x2                ; If they don't match, jump to x2
+    mov al, [si]             ; Second char
+    cmp al, [di]
+    jne no_match
 
     inc si
     inc di
-    mov al, [si]
-    cmp al, [di]          ; Compare fourth character
-    jne x2                ; If they don't match, jump to x2
+    mov al, [si]             ; Third char
+    cmp al, [di]
+    jne no_match
 
-    ; If all 4 characters match, print "Matching string is found"
+    inc si
+    inc di
+    mov al, [si]             ; Fourth char
+    cmp al, [di]
+    jne no_match
+
+    ; If all 4 matched
     lea dx, msg2
     mov ah, 09h
     int 21h
-    jmp x4                ; Jump to end of program
+    jmp done
 
-x2:
-    inc si                ; Move to the next byte in dat1
-    loop x1               ; Repeat loop until end of dat1 is reached
+no_match:
+    pop si                   ; Restore SI to next position
+    inc si                   ; Move to next char
+    loop check_loop          ; Try next window
 
-    ; If no match is found, display "Matching string is not found"
+    ; If loop finishes: no match
     lea dx, msg3
     mov ah, 09h
     int 21h
 
-x4:
+done:
 .exit
 end
