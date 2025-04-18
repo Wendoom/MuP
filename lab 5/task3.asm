@@ -6,8 +6,9 @@
     msg3 db 0Ah, 0Dh, "Matching string is not found$"
 
     dat1 db 'hxxxohlll5world67890$', 0   
-    max1 db 4
-    string1 db 5, ?, 5 dup(?)   ; First byte=max input, second byte=actual input, rest for characters
+    max1 db 5
+	act1 db ?
+    string1 db 5 dup(?)   ; First byte=max input, second byte=actual input, rest for characters
     
 .code
 .startup
@@ -26,18 +27,18 @@
     int 21h
 
     ; Accept 4-character input
-    lea dx, string1
+    lea dx, max1
     mov ah, 0Ah
     int 21h
 
     ; Set up pointers
     lea si, dat1             ; dat1 base
-    lea bx, string1 + 2      ; input string base
+    lea bx, string1      ; input string base
     mov cl, 17 - 4 + 1       ; Loop only valid positions (14 attempts)
 
 check_loop:
     push si                  ; Save SI for reset if failed
-    lea di, string1 + 2      ; Always start comparison from input start
+    lea di, string1		     ; Always start comparison from input start
 
     mov al, [si]             ; First char
     cmp al, [di]
